@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Simple Map</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+	<META HTTP-EQUIV="Refresh" CONTENT="420">
+    <style type="text/css">
+      html, body, #map-canvas {
+        height: 100%;
+        margin: 0px;
+        padding: 0px
+      }
+	  
+	   .labels {
+     color: orange;
+     background-color: black;
+     font-family: "Lucida Grande", "Arial", sans-serif;
+     font-size: 10px;
+     font-weight: bold;
+     text-align: center;
+     width: 50px;     
+     border: 2px solid black;
+     white-space: nowrap;}
+    </style>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="https://jquery-xml2json-plugin.googlecode.com/svn/trunk/jquery.xml2json.js" type="text/javascript" language="javascript"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+	<script src="http://google-maps-utility-library-v3.googlecode.com/svn/tags/markerwithlabel/1.0.1/src/markerwithlabel.js"></script>
+    <script>
+var markers = [];
+var map = null;
+
+  $.get('Customers.xml', function(xml) {
+      var jsonObj = $.xml2json(xml);
+        $.each(jsonObj.Marker, function(){
+            var stat = this.site_status == "Critical" ? "http://maps.google.com/mapfiles/ms/micons/red-dot.png" : "http://maps.google.com/mapfiles/ms/micons/green-dot.png";
+                 var mark = {
+                        title: this.title,
+                        location: this.site_location,
+                        icon: stat
+                        }
+                markers.push(mark);
+        });
+        for(var i=0; i< markers.length; i++){
+          var maddress = markers[i].location;
+          var image = markers[i].icon;
+		  var custname = markers[i].title;
+          geocodeAddress(maddress, image, custname,map); 
+        } 
+});     
+
+function geocodeAddress(maddress, image, custname,map) {
+  var geocoder = new google.maps.Geocoder();
+  geocoder.geocode( { 'address': maddress}, function(results, status) { 
+    if (status == google.maps.GeocoderStatus.OK) {   
+      var myLatlng = new google.maps.LatLng(results[0].geometry.location.lat(),results[0].geometry.location.lng());
+      var iconBase = 'https://maps.google.com/mapfiles/kml/shapes/';
+      var marker = new MarkerWithLabel({
+	  position: myLatlng, map:map, icon: image,labelContent: custname,
+       labelAnchor: new google.maps.Point(22, 0),
+       labelClass: "labels", // the CSS class for the label
+       labelStyle: {opacity: 0.75}});
+    } else {
+      alert("Geocode was not successful for the following reason: " + status);
+    }
+  });
+}
+  
+function initialize() {
+    var chicago = new google.maps.LatLng(35.442579,-40.895920);
+    var mapOptions = {
+        zoom: 4,
+        center: chicago,
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+  }
+
+  map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+}
+google.maps.event.addDomListener(window, 'load', initialize);
+    </script>
+  </head>
+  <body>
+     <div id="map-canvas"></div>
+  </body>
+</html>
